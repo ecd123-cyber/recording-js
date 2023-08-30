@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravador de Tela</title>
+</head>
+<body>
+    <button id="startRecording">Iniciar Gravação</button>
+    <button id="stopRecording" disabled>Parar Gravação</button>
+    <video id="recordedVideo" controls></video>
+
+    <script>
+        const startButton = document.getElementById('startRecording');
+        const stopButton = document.getElementById('stopRecording');
+        const recordedVideo = document.getElementById('recordedVideo');
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        startButton.addEventListener('click', () => {
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            
+            navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+                .then((stream) => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            recordedChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                        recordedVideo.src = URL.createObjectURL(blob);
+                    };
+
+                    mediaRecorder.start();
+                })
+                .catch((error) => {
+                    console.error('Erro ao acessar a tela:', error);
+                });
+        });
+
+        stopButton.addEventListener('click', () => {
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            mediaRecorder.stop();
+        });
+    </script>
+</body>
+</html>
